@@ -20,7 +20,7 @@ import interfaces.ISpeedBump;
 import utils.MySimpleLogger;
 
 public class SpeedBump_Resource extends Recurso {
-	public static final String PATH = "/speed_bump";
+	public static final String PATH = "/speedbump";
 
 	public static JSONObject serialize(ISpeedBump s) {
 		JSONObject jsonResult = new JSONObject();
@@ -67,7 +67,7 @@ public class SpeedBump_Resource extends Recurso {
 		JSONObject payload = null;
 		try {
 			payload = new JSONObject(entity.getText());
-			String action = payload.getString("accion");
+			String action = payload.getString("action");
 			
 			if ( action.equalsIgnoreCase("updateManualState") ) {
 				processUpdateManualState(payload, speedBump);

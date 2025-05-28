@@ -71,7 +71,7 @@ public class Functions_Resource extends Recurso {
 		JSONObject payload = null;
 		try {
 			payload = new JSONObject(entity.getText());
-			String action = payload.getString("accion");
+			String action = payload.getString("action");
 			
 			if ( action.equalsIgnoreCase("enable") ) {
 				f.enable();
