@@ -4,25 +4,36 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttTopic;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.json.JSONObject;
 
+import com.amazonaws.services.iot.client.AWSIotQos;
+
+import awsiotthing.AWSIoTThingStarter;
 import componentes.SpeedBump.SpeedBump;
+import interfaces.IFunction;
 import utils.MySimpleLogger;
 
-public abstract class SpeedBump_MqttClient implements MqttCallback {
+public class Mode_MQTT implements MqttCallback {
 
 	protected MqttClient myClient;
 	protected String clientId = null;
 	protected String brokerURL = null;
 
 	protected SpeedBump speedBump = null;
+	protected IFunction function = null;
+
+    protected String topicFunction = utils.Configuration.TOPIC_BASE + "speedbump/" + this.speedBump.getId() + "/function/" + this.function.getId() + "/info";
 
 	
-	public SpeedBump_MqttClient(String clientId, SpeedBump speedBump, String MQTTBrokerURL) {
+	public Mode_MQTT(String clientId, SpeedBump speedBump, IFunction function, String MQTTBrokerURL) {
 		this.clientId = clientId;
-		this.speedBump = speedBump;
+        this.speedBump = speedBump;
+		this.function = function;
 		this.brokerURL = MQTTBrokerURL;
 	}
 
@@ -36,6 +47,8 @@ public abstract class SpeedBump_MqttClient implements MqttCallback {
 		MySimpleLogger.trace(this.clientId, "| Topic:" + topic);
 		MySimpleLogger.trace(this.clientId, "| Message: " + payload);
 		MySimpleLogger.trace(this.clientId, "-------------------------------------------------");
+
+        MySimpleLogger.warn(this.clientId, "Ignoring message from topic: " + topic);
 	}
 
 	
@@ -99,7 +112,6 @@ public abstract class SpeedBump_MqttClient implements MqttCallback {
 
 		
 	}
-
 	
 	public void subscribe(String theTopic) {
 		
@@ -128,4 +140,26 @@ public abstract class SpeedBump_MqttClient implements MqttCallback {
 		
 	}
 
+    public void publishStatus(String funcion, JSONObject json) {
+		MqttTopic topic = myClient.getTopic(this.topicFunction);
+		MqttMessage message = new MqttMessage(json.toString().getBytes());
+		message.setQos(0);
+		message.setRetained(true);
+
+		// Publish the message
+    	MqttDeliveryToken token = null;
+    	try {
+    		// publish message to broker
+			token = topic.publish(message);
+	    	// Wait until the message has been delivered to the broker
+			token.waitForCompletion();
+			Thread.sleep(100);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	protected String calculateTopic(IFunction f) {
+		return utils.Configuration.TOPIC_BASE + "speedBump/" + this.speedBump.getId() + "/function/" + f.getId();
+	}
 }

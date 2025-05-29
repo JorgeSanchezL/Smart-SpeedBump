@@ -4,8 +4,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.amazonaws.services.iot.client.AWSIotConnectionStatus;
+import com.amazonaws.services.iot.client.AWSIotException;
+import com.amazonaws.services.iot.client.AWSIotMqttClient;
+import com.amazonaws.services.iot.client.AWSIotQos;
+
+import awsiotthing.AWSIoTThingStarter;
 import componentes.RoadPlace;
-import componentes.SpeedBump.mqtt.SpeedBump_RoadInfoSubscriber;
+import componentes.SpeedBump.mqtt.Device_MQTT;
 import componentes.SpeedBump.rest.SpeedBump_APIREST;
 import interfaces.IFunction;
 import interfaces.ISpeedBump;
@@ -23,8 +29,10 @@ public class SpeedBump implements ISpeedBump {
 
 	protected String speedBumpID = null;
 	protected RoadPlace rp = null;
-	protected SpeedBump_RoadInfoSubscriber subscriber = null;
+	protected Device_MQTT mqttClient = null;
 	protected SpeedBump_APIREST apiREST = null;
+
+	protected AWSIotMqttClient awsIotMqttClient = null;
 
 	protected Map<String, IFunction> functions = null;
 
@@ -45,8 +53,31 @@ public class SpeedBump implements ISpeedBump {
 
 		this.apiREST = SpeedBump_APIREST.build(this);
 
-		this.subscriber = new SpeedBump_RoadInfoSubscriber(id + ".info-subscriber", this, this.brokerURL);
-		this.subscriber.connect();		
+		this.mqttClient = new Device_MQTT(id, this, this.brokerURL);
+		this.mqttClient.connect();
+
+		String myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
+		String info = myTopic + "/info";
+		String traffic = myTopic + "/traffic";
+		
+		myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
+		this.mqttClient.subscribe(info);
+		this.mqttClient.subscribe(traffic);
+
+		this.awsIotMqttClient = AWSIoTThingStarter.initClient();
+		if (this.awsIotMqttClient != null) {
+			MySimpleLogger.info(id, "AWS IoT MQTT client initialized successfully.");
+		} else {
+			MySimpleLogger.error(id, "Failed to initialize AWS IoT MQTT client.");
+		}
+		
+		try {
+			awsIotMqttClient.connect();
+			MySimpleLogger.info(id, "Client Connected to AWS IoT MQTT");
+
+		} catch (AWSIotException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public SpeedBump(String id, String brokerURL, int port, RoadPlace roadPlace) {
@@ -58,8 +89,31 @@ public class SpeedBump implements ISpeedBump {
 
 		this.apiREST = SpeedBump_APIREST.build(this, port);
 
-		this.subscriber = new SpeedBump_RoadInfoSubscriber(id + ".info-subscriber", this, this.brokerURL);
-		this.subscriber.connect();		
+		this.mqttClient = new Device_MQTT(id, this, this.brokerURL);
+		this.mqttClient.connect();		
+
+		String myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
+		String info = myTopic + "/info";
+		String traffic = myTopic + "/traffic";
+		
+		myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
+		this.mqttClient.subscribe(info);
+		this.mqttClient.subscribe(traffic);
+
+		this.awsIotMqttClient = AWSIoTThingStarter.initClient();
+		if (this.awsIotMqttClient != null) {
+			MySimpleLogger.info(id, "AWS IoT MQTT client initialized successfully.");
+		} else {
+			MySimpleLogger.error(id, "Failed to initialize AWS IoT MQTT client.");
+		}
+
+		try {
+			awsIotMqttClient.connect();
+			MySimpleLogger.info(id, "Client Connected to AWS IoT MQTT");
+
+		} catch (AWSIotException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void setId(String speedBumpID) {
@@ -74,26 +128,20 @@ public class SpeedBump implements ISpeedBump {
 	public void setRoadPlace(RoadPlace rp) {
 		String myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
 		String info = myTopic + "/info";
-		String signals = myTopic + "/signals";
 		String traffic = myTopic + "/traffic";
-		String alerts = myTopic + "/alerts";
 
 		// If there is a previous road place, unsubscribe from its topics
 		if(this.rp != null){
-			this.subscriber.unsubscribe(info);
-			this.subscriber.unsubscribe(signals);
-			this.subscriber.unsubscribe(traffic);
-			this.subscriber.unsubscribe(alerts);
+			this.mqttClient.unsubscribe(info);
+			this.mqttClient.unsubscribe(traffic);
 			
 		}
 		
 		// Connect the subscriber to the new road place
 		this.rp = rp;
 		myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
-		this.subscriber.subscribe(info);
-		this.subscriber.subscribe(signals);
-		this.subscriber.subscribe(traffic);
-		this.subscriber.subscribe(alerts);
+		this.mqttClient.subscribe(info);
+		this.mqttClient.subscribe(traffic);
 	}
 
 	public RoadPlace getRoadPlace() {
@@ -151,14 +199,14 @@ public class SpeedBump implements ISpeedBump {
 
 	@Override
 	public ISpeedBump start() {
-		this.subscriber.connect();
+		this.mqttClient.connect();
 		this.apiREST.start();
 		return this;
 	}
 
 	@Override
 	public ISpeedBump stop() {
-		this.subscriber.disconnect();
+		this.mqttClient.disconnect();
 		this.apiREST.stop();
 		return this;
 	}
@@ -193,5 +241,18 @@ public class SpeedBump implements ISpeedBump {
 		if ( this.localGetFunctions() == null )
 			return null;
 		return this.localGetFunctions().get(funcionId);
+	}
+
+	public void publishToAWSIoT(String topic, String message) {
+		if (awsIotMqttClient != null && awsIotMqttClient.getConnectionStatus() == AWSIotConnectionStatus.CONNECTED) {
+			try {
+				awsIotMqttClient.publish(topic, AWSIotQos.QOS0, message);
+				MySimpleLogger.info(this.speedBumpID, "Message published to AWS IoT: " + message);
+			} catch (AWSIotException e) {
+				MySimpleLogger.error(this.speedBumpID, "Failed to publish message to AWS IoT: " + e.getMessage());
+			}
+		} else {
+			MySimpleLogger.error(this.speedBumpID, "AWS IoT MQTT client is not connected.");
+		}
 	}
 }

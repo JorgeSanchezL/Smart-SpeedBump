@@ -1,7 +1,12 @@
 package componentes.SpeedBump.functions;
 
 import interfaces.IFunction;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import componentes.SpeedBump.SpeedBump;
+import componentes.SpeedBump.mqtt.Mode_MQTT;
 import interfaces.FunctionStatus;
 import utils.MySimpleLogger;
 
@@ -14,7 +19,10 @@ public class Mode_Function implements IFunction {
 
 	private String loggerId = null;
 
+	protected Mode_MQTT mqttClient = null;
 	
+	protected String topicFunction = utils.Configuration.TOPIC_BASE + "speedbump/" + this.speedBump.getId() + "/function/" + this.id + "/info";
+
 	public static Mode_Function build(String id, SpeedBump speedBump, String mqttBrokerURL) {
 		return new Mode_Function(id, FunctionStatus.OFF, speedBump, mqttBrokerURL);
 	}
@@ -27,6 +35,9 @@ public class Mode_Function implements IFunction {
 		this.id = id;
 		this.initialStatus = initialStatus;
 		this.loggerId = "Function " + id;
+
+		this.mqttClient = new Mode_MQTT(id, speedBump, this, mqttBrokerURL);
+		this.mqttClient.connect();
 	}
 		
 	@Override
@@ -43,6 +54,7 @@ public class Mode_Function implements IFunction {
 		MySimpleLogger.info(this.loggerId, "==> Mode set to manual");
 		this.setStatus(FunctionStatus.ON);
 		this.speedBump.setManual(true);
+		this.publishStatus();
 		return this;
 	}
 
@@ -55,6 +67,7 @@ public class Mode_Function implements IFunction {
 		MySimpleLogger.info(this.loggerId, "==> Mode set to automatic");
 		this.setStatus(FunctionStatus.OFF);
 		this.speedBump.setManual(false);
+		this.publishStatus();
 		return this;
 	}
 	
@@ -84,5 +97,17 @@ public class Mode_Function implements IFunction {
 	protected IFunction setStatus(FunctionStatus status) {
 		this.status = status;
 		return this;
+	}
+
+	private void publishStatus() {
+		JSONObject pubMsg = new JSONObject();
+		try {
+			pubMsg.put("action", this.getStatus().name());
+	   		} catch (JSONException e1) {
+			e1.printStackTrace();
+		}
+
+		this.mqttClient.publishStatus(this.getId(), pubMsg);
+		this.speedBump.publishToAWSIoT(topicFunction, pubMsg.toString());
 	}
 }
