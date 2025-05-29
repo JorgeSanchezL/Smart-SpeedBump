@@ -49,12 +49,13 @@ public class SpeedBump implements ISpeedBump {
 		this.setId(id);
 		this.brokerURL = brokerURL;
 
-		this.setRoadPlace(roadPlace);
-
+		
 		this.apiREST = SpeedBump_APIREST.build(this);
-
+		
 		this.mqttClient = new Device_MQTT(id, this, this.brokerURL);
 		this.mqttClient.connect();
+		
+		this.setRoadPlace(roadPlace);
 
 		String myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
 		String info = myTopic + "/info";
@@ -85,13 +86,14 @@ public class SpeedBump implements ISpeedBump {
 		this.setId(id);
 		this.brokerURL = brokerURL;
 
-		this.setRoadPlace(roadPlace);
-
+		
 		this.apiREST = SpeedBump_APIREST.build(this, port);
-
+		
 		this.mqttClient = new Device_MQTT(id, this, this.brokerURL);
 		this.mqttClient.connect();		
-
+		
+		this.setRoadPlace(roadPlace);
+		
 		String myTopic =  "es/upv/pros/tatami/smartcities/traffic/PTPaterna/road/" + rp.getRoad();
 		String info = myTopic + "/info";
 		String traffic = myTopic + "/traffic";

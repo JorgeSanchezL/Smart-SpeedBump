@@ -6,11 +6,23 @@
     "configurations": [
         {
             "type": "java",
-            "name": "SmartCarStarterApp",
+            "name": "StarterApp",
             "request": "launch",
-            "mainClass": "SmartCarStarterApp",
+            "mainClass": "StarterApp",
             "args": [
                 "SmartCar-Jorge2",
+                "tambori.dsic.upv.es:10082/roads"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Raspberry",
+            "request": "launch",
+            "mainClass": "RaspberryStarterApp",
+            "args": [
+                "ttmi054",
+                "ttmi054.iot.upv.es",
+                8182,
                 "tcp://ttmi008.iot.upv.es:1883"
             ]
         }

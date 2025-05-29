@@ -1,13 +1,8 @@
 import componentes.RoadPlace;
-import componentes.SmartCar.SmartCar;
 import componentes.SpeedBump.SpeedBump;
 import componentes.SpeedBump.functions.Incident_Function;
 import componentes.SpeedBump.functions.Mode_Function;
 import componentes.SpeedBump.functions.SpeedBump_Function;
-import componentes.SpeedLimit.SpeedLimit;
-import componentes.pi4j2.FunctionPi4Jv2_Incident;
-import componentes.pi4j2.FunctionPi4Jv2_Mode;
-import componentes.pi4j2.FunctionPi4Jv2_SpeedBump;
 import interfaces.FunctionStatus;
 
 public class StarterApp {

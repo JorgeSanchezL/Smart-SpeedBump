@@ -1,4 +1,4 @@
-package pi4j2.iniciador;
+
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
@@ -10,7 +10,7 @@ import componentes.pi4j2.FunctionPi4Jv2_Mode;
 import componentes.pi4j2.FunctionPi4Jv2_SpeedBump;
 import interfaces.FunctionStatus;
 
-public class DispositivoIniciadorPi4Jv2 {
+public class RaspberryStarterApp {
 
 	public static void main(String[] args) {
 
