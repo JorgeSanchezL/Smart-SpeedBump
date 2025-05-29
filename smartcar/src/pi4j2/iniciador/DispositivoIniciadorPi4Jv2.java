@@ -3,6 +3,7 @@ package pi4j2.iniciador;
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
 
+import componentes.RoadPlace;
 import componentes.SpeedBump.SpeedBump;
 import componentes.pi4j2.FunctionPi4Jv2_Incident;
 import componentes.pi4j2.FunctionPi4Jv2_Mode;
@@ -30,7 +31,7 @@ public class DispositivoIniciadorPi4Jv2 {
 		//Platforms platforms = pi4jContext.platforms();
 
 		
-		SpeedBump s = SpeedBump.build(deviceId, mqttBroker, Integer.parseInt(port), null);
+		SpeedBump s = SpeedBump.build(deviceId, mqttBroker, Integer.parseInt(port), new RoadPlace("R1s2a", 300));
 
 		// Añadimos funciones al dispositivo
 		// f1 - GPIO_17

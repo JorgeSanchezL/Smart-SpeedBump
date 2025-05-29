@@ -41,7 +41,7 @@ public class SpeedBump implements ISpeedBump {
 		this.setId(id);
 		this.brokerURL = brokerURL;
 
-		this.setRoadPlace(new RoadPlace("R5s1", 0));
+		this.setRoadPlace(roadPlace);
 
 		this.apiREST = SpeedBump_APIREST.build(this);
 
@@ -54,7 +54,7 @@ public class SpeedBump implements ISpeedBump {
 		this.setId(id);
 		this.brokerURL = brokerURL;
 
-		this.setRoadPlace(new RoadPlace("R5s1", 0));
+		this.setRoadPlace(roadPlace);
 
 		this.apiREST = SpeedBump_APIREST.build(this, port);
 
